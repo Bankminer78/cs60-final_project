@@ -6,12 +6,18 @@ contained before the .com suffix and returning it in a TXT record.
 
 import socket
 import base64
+import requests
+import math
 from scapy.all import DNS, DNSQR, DNSRR
 
 # Configuration
 DNS_PORT = 53  # Standard DNS port (requires root privileges)
 LISTEN_IP = "0.0.0.0"  # Listen on all interfaces
+CHUNK_SIZE = 200
 
+sessions = {}
+id2seq = {}
+id2data = {}
 def parse_dns_query(data):
     """Parse DNS query using scapy."""
     try:
@@ -21,7 +27,8 @@ def parse_dns_query(data):
         print(f"Error parsing DNS packet: {e}")
         return None
 
-def create_dns_response(query_packet):
+#NOTE: Claude created this SCAPY skeleton
+def create_dns_response(query_packet, answer: str):
     """Create a DNS response packet using scapy."""
     try:
         # Extract the query details
@@ -32,8 +39,7 @@ def create_dns_response(query_packet):
         print(f"Query for: {qname.decode() if isinstance(qname, bytes) else qname}")
         print(f"Query type: {qtype}")
 
-        decoded_payload = decode_base64_label(qname)
-        print(f"Decoded payload: {decoded_payload}")
+        print(f"Decoded payload: {qname}")
 
         # Create the response
         response = DNS(
@@ -46,7 +52,7 @@ def create_dns_response(query_packet):
                 rrname=qname,
                 type='TXT',  # Return decoded payload as TXT record
                 ttl=300,
-                rdata=decoded_payload
+                rdata=answer
             )
         )
 
@@ -55,30 +61,67 @@ def create_dns_response(query_packet):
         print(f"Error creating DNS response: {e}")
         return None
 
-def decode_base64_label(qname):
-    """Decode the leftmost label before .com from the queried domain."""
-    if isinstance(qname, bytes):
-        qname = qname.decode()
 
-    # Remove trailing dot if present (fully qualified domain)
-    qname = qname.rstrip('.')
+def handle_get(query: str) -> str:
+    """
+    Handles initial GET request. Uses requests library to make appropriate request.
+    Chunks data and returns list of chunks.
 
-    # Only consider the part before .com
-    if not qname.lower().endswith(".com") or len(qname) < 5:
-        return ""
+    Returns:
+        [DATA]
+    """
+    response = requests.get(query)
+    if response.status_code == 200:
 
-    label = qname[:-4]  # Strip the .com suffix
-    label = label.split('.')[-1]  # Take the immediate label before .com
+        bytes = response.content
+        
+        data = []
+        num_chunks = math.ceil(len(bytes)/CHUNK_SIZE)
 
-    # Restore padding if it was stripped to make the label DNS-safe
-    padding = '=' * (-len(label) % 4)
-    try:
-        decoded_bytes = base64.b64decode(label + padding, validate=False)
-        return decoded_bytes.decode("utf-8", errors="replace")
-    except Exception as e:
-        print(f"Failed to decode base64 label '{label}': {e}")
-        return ""
+        for i in range(num_chunks):
+            if i != num_chunks - 1:
+                data.append(bytes[i*CHUNK_SIZE, (i+1)*CHUNK_SIZE])
+            else: #last chunk may or may not be evenly CHUNK_SIZE
+                data.append(bytes[i*CHUNK_SIZE, -1])
 
+        return data
+
+    else:
+        print("BAD REQUEST?") #TODO: gotta handle this
+
+    print("FETCHED PAGE", response)
+
+def handle_query(query_string: str, src_dst: str) -> str:
+    """
+    Routes incoming query to GET or ACK handler.
+
+    Args:
+        query_string: e.g., "GET-index-html.abc123.tunnel.local"
+
+    Returns:
+        TXT record response string
+    """
+    if query_string.startswith("GET"): #NOTE: Current any new GET request will reset the session for a client
+       query, session_id, _ = query_string[5:].split(".")#GET- is 4 char
+
+       sessions[src_dst] = session_id
+
+       id2seq[session_id] = 0
+
+       id2data = handle_get(query)
+
+       return id2data[session_id][0]
+
+    if query_string.startswith("ACK"):
+
+        seq, session_id, _ = query_string[5].split(".") #ACK-0 , seq is 5th car
+
+        if seq == id2seq[session_id] % 2: #client acked the packet we sent!
+            id2seq[session_id] += id2seq[session_id] #increment sequence number & send the next data chunk
+        #NOTE: doesnt handle fring cases where ACK is some weird number not 0 or 1
+        return id2data[session_id][id2seq[session_id]]
+
+#NOTE: Claude created this basic socket server. This is the UDP version of our Lab 2 Code.
 def start_dns_server():
     """Start the DNS server."""
     # Create UDP socket
@@ -113,11 +156,12 @@ def start_dns_server():
             if query is None:
                 continue
 
+            answer = handle_query(query, addr[0])
             # Create response
-            response = create_dns_response(query)
+            response = create_dns_response(answer)
+            
             if response is None:
                 continue
-
             # Send response
             sock.sendto(response, addr)
             print("Sent response with TXT payload")
