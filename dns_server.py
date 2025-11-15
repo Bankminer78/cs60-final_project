@@ -72,6 +72,7 @@ def create_dns_response(query_packet, src_addr):
 
 
 def generate_checksum(data) -> bytes:
+    print(data)
     if len(data) % 2 == 1:
         data = data + b'\x00'
     sum = 0x0000
@@ -79,6 +80,7 @@ def generate_checksum(data) -> bytes:
         sum = sum + ((data[i] << 8) + data[i+1])
         sum = (sum & 0xFFFF) + (sum >> 16)
     sum = (sum & 0xFFFF) + (sum >> 16)
+    print(sum ^ 0xFFFF)
     return sum ^ 0xFFFF 
 
     
