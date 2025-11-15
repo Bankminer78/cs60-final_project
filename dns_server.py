@@ -114,11 +114,12 @@ def handle_query(query_bytes: str, src_dst: str) -> str:
     query_string = query_bytes.decode()
     print("Checking for starts with", query_string)
     if query_string.startswith("GET"): #NOTE: Current any new GET request will reset the session for a client
-       query, session_id, _ = query_string[5:].split(".")#GET- is 4 char
+       query, session_id, tunnel, local, _ = query_string[5:].split(".")#GET- is 4 char
 
        sessions[src_dst] = session_id
 
        id2seq[session_id] = 0
+
 
        id2data[session_id] = handle_get(query)
 
@@ -127,7 +128,7 @@ def handle_query(query_bytes: str, src_dst: str) -> str:
        return id2data[session_id][0]
     elif query_string.startswith("ACK"):
 
-        seq, session_id, _ = query_string[5].split(".") #ACK-0 , seq is 5th car
+        seq, session_id, tunnel, local, _  = query_string[5].split(".") #ACK-0 , seq is 5th car
 
         if seq == id2seq[session_id] % 2: #client acked the packet we sent!
             id2seq[session_id] += id2seq[session_id] #increment sequence number & send the next data chunk
