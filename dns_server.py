@@ -44,7 +44,8 @@ def create_dns_response(query_packet, src_addr):
         answer = handle_query(qname, src_addr)
 
         checksum = generate_checksum(answer)
-        answer = id2seq[src_addr] + "|" + answer + "|" + checksum
+
+        answer = id2seq[sessions[src_addr]] + "|" + answer + "|" + checksum
 
         print(answer)
 
