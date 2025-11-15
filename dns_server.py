@@ -82,17 +82,16 @@ def handle_get(query: str) -> str:
     if response.status_code == 200:
 
         print("HTTP GET", response.text)
-        bytes = response.content
+        content_bytes = response.content
 
-        
         data = []
-        num_chunks = math.ceil(len(bytes)/CHUNK_SIZE)
-
+        num_chunks = math.ceil(len(content_bytes)/CHUNK_SIZE)
+        #NOTE: Claude pointed out bytes is a system name
         for i in range(num_chunks):
             if i != num_chunks - 1:
-                data.append(bytes[i*CHUNK_SIZE, (i+1)*CHUNK_SIZE])
+                data.append(content_bytes[i*CHUNK_SIZE:(i+1)*CHUNK_SIZE])
             else: #last chunk may or may not be evenly CHUNK_SIZE
-                data.append(bytes[i*CHUNK_SIZE, -1])
+                data.append(content_bytes[i*CHUNK_SIZE:])
 
         return data
 
