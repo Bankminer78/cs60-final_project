@@ -45,7 +45,7 @@ def create_dns_response(query_packet, src_addr):
 
         checksum = generate_checksum(answer)
 
-        answer = str(id2seq[sessions[src_addr]]) + "|" + answer.encode() + "|" + str(checksum)
+        answer = str(id2seq[sessions[src_addr]]) + "|" + answer.decode() + "|" + str(checksum)
 
         print(answer)
 
@@ -61,7 +61,7 @@ def create_dns_response(query_packet, src_addr):
                 rrname=qname,
                 type='TXT',  # Return decoded payload as TXT record
                 ttl=300,
-                rdata=answer
+                rdata=answer.decode()
             )
         )
 
