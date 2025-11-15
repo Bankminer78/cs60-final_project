@@ -76,7 +76,7 @@ def handle_get(query: str) -> str:
     """
     print("making request to ", query)
 
-    response = requests.get(query)
+    response = requests.get("http://" + query) #TODO: Only http for now
 
     print("resp", response)
     if response.status_code == 200:
@@ -114,14 +114,14 @@ def handle_query(query_bytes: str, src_dst: str) -> str:
     query_string = query_bytes.decode()
     print("Checking for starts with", query_string)
     if query_string.startswith("GET"): #NOTE: Current any new GET request will reset the session for a client
-       query, session_id, tunnel, local, _ = query_string[5:].split(".")#GET- is 4 char
+       query, session_id, tunnel, local, _ = query_string[4:].split(".")#GET- is 4 char
 
        sessions[src_dst] = session_id
 
        id2seq[session_id] = 0
 
 
-       id2data[session_id] = handle_get(query)
+       id2data[session_id] = handle_get(query.replace("-", "."))
 
        print(id2data)
 
