@@ -43,6 +43,8 @@ def create_dns_response(query_packet, src_addr):
 
         answer = handle_query(qname, src_addr)
 
+
+
         # Create the response
         response = DNS(
             id=query_packet.id,
@@ -72,7 +74,11 @@ def handle_get(query: str) -> str:
     Returns:
         [DATA]
     """
+    print("making request to ", query)
+
     response = requests.get(query)
+
+    print("resp", response)
     if response.status_code == 200:
 
         print("HTTP GET", response.text)
