@@ -28,7 +28,7 @@ def parse_dns_query(data):
         return None
 
 #NOTE: Claude created this SCAPY skeleton
-def create_dns_response(query_packet, answer: str):
+def create_dns_response(query_packet, src_addr, answer: str):
     """Create a DNS response packet using scapy."""
     try:
         # Extract the query details
@@ -40,6 +40,8 @@ def create_dns_response(query_packet, answer: str):
         print(f"Query type: {qtype}")
 
         print(f"Decoded payload: {qname}")
+
+        answer = handle_query(qname, src_addr)
 
         # Create the response
         response = DNS(
@@ -93,7 +95,7 @@ def handle_get(query: str) -> str:
 
     print("FETCHED PAGE", response)
 
-def handle_query(query: str, src_dst: str) -> str:
+def handle_query(query_string: str, src_dst: str) -> str:
     """
     Routes incoming query to GET or ACK handler.
 
@@ -103,7 +105,6 @@ def handle_query(query: str, src_dst: str) -> str:
     Returns:
         TXT record response string
     """
-    query_string = query.decode("utf-8")
     print("Checking for starts with", query_string)
     if query_string.startswith("GET"): #NOTE: Current any new GET request will reset the session for a client
        query, session_id, _ = query_string[5:].split(".")#GET- is 4 char
@@ -161,10 +162,8 @@ def start_dns_server():
             query = parse_dns_query(data)
             if query is None:
                 continue
-
-            answer = handle_query(query, addr[0])
             # Create response
-            response = create_dns_response(answer)
+            response = create_dns_response(query, addr[0])
             
             if response is None:
                 continue
