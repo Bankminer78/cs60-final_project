@@ -125,8 +125,7 @@ def handle_query(query_bytes: str, src_dst: str) -> str:
        print(id2data)
 
        return id2data[session_id][0]
-
-    if query_string.startswith("ACK"):
+    elif query_string.startswith("ACK"):
 
         seq, session_id, _ = query_string[5].split(".") #ACK-0 , seq is 5th car
 
@@ -134,6 +133,9 @@ def handle_query(query_bytes: str, src_dst: str) -> str:
             id2seq[session_id] += id2seq[session_id] #increment sequence number & send the next data chunk
         #NOTE: doesnt handle fring cases where ACK is some weird number not 0 or 1
         return id2data[session_id][id2seq[session_id]]
+
+    else:
+        print("Unknown flag", query_string[:3])
 
 #NOTE: Claude created this basic socket server. This is the UDP version of our Lab 2 Code.
 def start_dns_server():
