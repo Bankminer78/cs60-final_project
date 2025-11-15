@@ -28,7 +28,7 @@ def parse_dns_query(data):
         return None
 
 #NOTE: Claude created this SCAPY skeleton
-def create_dns_response(query_packet, src_addr, answer: str):
+def create_dns_response(query_packet, src_addr):
     """Create a DNS response packet using scapy."""
     try:
         # Extract the query details
