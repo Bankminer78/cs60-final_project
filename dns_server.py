@@ -73,7 +73,9 @@ def handle_get(query: str) -> str:
     response = requests.get(query)
     if response.status_code == 200:
 
+        print("HTTP GET", response.text)
         bytes = response.content
+
         
         data = []
         num_chunks = math.ceil(len(bytes)/CHUNK_SIZE)
@@ -101,7 +103,7 @@ def handle_query(query_string: str, src_dst: str) -> str:
     Returns:
         TXT record response string
     """
-    print("Checking for starts with")
+    print("Checking for starts with", query_string)
     if query_string.startswith("GET"): #NOTE: Current any new GET request will reset the session for a client
        query, session_id, _ = query_string[5:].split(".")#GET- is 4 char
 
@@ -109,7 +111,9 @@ def handle_query(query_string: str, src_dst: str) -> str:
 
        id2seq[session_id] = 0
 
-       id2data = handle_get(query)
+       id2data[session_id] = handle_get(query)
+
+       print(id2data)
 
        return id2data[session_id][0]
 
