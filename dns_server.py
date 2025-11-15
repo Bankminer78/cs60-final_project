@@ -43,9 +43,9 @@ def create_dns_response(query_packet, src_addr):
 
         answer = handle_query(qname, src_addr)
 
-        checksum = generate_checksum(answer)
+        checksum = generate_checksum(answer) #answer in bytes rn
 
-        answer = str(id2seq[sessions[src_addr]]) + "|" + answer.decode() + "|" + str(checksum)
+        answer = str(id2seq[sessions[src_addr]]).encode() + "|".encode() + answer + "|".encode() + checksum
 
         print(answer)
 
@@ -71,8 +71,17 @@ def create_dns_response(query_packet, src_addr):
         return None
 
 
-def generate_checksum(data):
-    return 0
+def generate_checksum(data) -> bytes:
+    if len(data) % 2 == 1:
+        data = data + b'\x00'
+    sum = 0x0000
+    for i in range(0, len(data), 2):
+        sum = sum + ((data[i] << 8) + data[i+1])
+        sum = (sum & 0xFFFF) + (sum >> 16)
+    sum = (sum & 0xFFFF) + (sum >> 16)
+    return sum ^ 0xFFFF 
+
+    
 
 def handle_get(query: str) -> str:
     """
