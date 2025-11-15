@@ -80,8 +80,8 @@ def generate_checksum(data) -> bytes:
         sum = sum + ((data[i] << 8) + data[i+1])
         sum = (sum & 0xFFFF) + (sum >> 16)
     sum = (sum & 0xFFFF) + (sum >> 16)
-    print(sum ^ 0xFFFF)
-    return sum ^ 0xFFFF 
+    print(hex(sum ^ 0xFFFF))
+    return hex(sum ^ 0xFFFF)
 
     
 
