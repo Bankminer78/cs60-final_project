@@ -61,7 +61,7 @@ def create_dns_response(query_packet, src_addr):
                 rrname=qname,
                 type='TXT',  # Return decoded payload as TXT record
                 ttl=300,
-                rdata=answer.decode()
+                rdata=answer.encode()
             )
         )
 
