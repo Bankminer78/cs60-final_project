@@ -93,7 +93,7 @@ def handle_get(query: str) -> str:
 
     print("FETCHED PAGE", response)
 
-def handle_query(query_string: str, src_dst: str) -> str:
+def handle_query(query: str, src_dst: str) -> str:
     """
     Routes incoming query to GET or ACK handler.
 
@@ -103,6 +103,7 @@ def handle_query(query_string: str, src_dst: str) -> str:
     Returns:
         TXT record response string
     """
+    query_string = query.decode("utf-8")
     print("Checking for starts with", query_string)
     if query_string.startswith("GET"): #NOTE: Current any new GET request will reset the session for a client
        query, session_id, _ = query_string[5:].split(".")#GET- is 4 char
