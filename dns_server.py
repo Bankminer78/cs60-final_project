@@ -43,6 +43,10 @@ def create_dns_response(query_packet, src_addr):
 
         answer = handle_query(qname, src_addr)
 
+        checksum = generate_checksum(answer)
+        answer = id2seq[src_addr] + "|" + answer + "|" + checksum
+
+        print(answer)
 
 
         # Create the response
@@ -65,6 +69,9 @@ def create_dns_response(query_packet, src_addr):
         print(f"Error creating DNS response: {e}")
         return None
 
+
+def generate_checksum(data):
+    return 0
 
 def handle_get(query: str) -> str:
     """
